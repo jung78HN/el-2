@@ -27,6 +27,9 @@ class QuizGame:
 
     def __init__(self):
         self.quizzes = default_quizzes()
+        self.best_score = None
+        self.best_correct = None
+        self.best_total = None
 
     @staticmethod
     def show_menu() -> None:
@@ -53,8 +56,8 @@ class QuizGame:
                     self.add_quiz()
                 elif choice == 3:
                     self.list_quizzes()
-                else:
-                    print("이 메뉴는 준비 중입니다.")
+                elif choice == 4:
+                    self.show_score()
         except (KeyboardInterrupt, EOFError):
             print("\n입력이 중단되었습니다.")
         print("태양계 퀴즈를 종료합니다.")
@@ -78,6 +81,11 @@ class QuizGame:
 
         score = correct * 100 // total
         print(f"\n결과: {total}문제 중 {correct}문제 정답 ({score}점)")
+        if self.best_score is None or score > self.best_score:
+            self.best_score = score
+            self.best_correct = correct
+            self.best_total = total
+            print("새로운 최고 점수입니다!")
 
     def add_quiz(self) -> None:
         print("\n새 퀴즈 등록")
@@ -97,6 +105,12 @@ class QuizGame:
         print(f"\n등록된 퀴즈 목록 ({len(self.quizzes)}개)")
         for number, quiz in enumerate(self.quizzes, start=1):
             print(f"  [{number}] {quiz.question}")
+
+    def show_score(self) -> None:
+        if self.best_score is None:
+            print("아직 완료한 퀴즈가 없습니다.")
+            return
+        print(f"최고 점수: {self.best_score}점 ({self.best_total}문제 중 {self.best_correct}문제 정답)")
 
 
 if __name__ == "__main__":
