@@ -52,3 +52,5 @@ python main.py
 - [테스트 케이스와 실행 결과](docs/test-cases.md)
 
 실행 화면은 실제 콘솔 출력과 입력을 기록한 뒤 읽기 쉬운 크기로 캡처했습니다.
+
+Windows에서 python 명령이 인식되지 않고 Python 런처가 설치되어 있다면 `py -3 main.py`로 실행할 수 있습니다.
