@@ -1,3 +1,6 @@
+from questions import default_quizzes
+
+
 def read_number(prompt: str, minimum: int, maximum: int) -> int:
     while True:
         try:
@@ -12,6 +15,9 @@ def read_number(prompt: str, minimum: int, maximum: int) -> int:
 
 class QuizGame:
     """메뉴와 퀴즈 게임의 진행을 관리한다."""
+
+    def __init__(self):
+        self.quizzes = default_quizzes()
 
     @staticmethod
     def show_menu() -> None:
