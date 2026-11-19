@@ -44,3 +44,11 @@ python main.py
 | `best_total` | 최고 점수를 기록한 게임의 전체 문제 수 |
 
 완료한 게임이 없는 경우 점수 관련 세 필드는 `null`입니다. 개인 플레이 데이터인 `state.json`은 Git에서 제외합니다.
+
+## 제출 자료
+
+- [개발 환경](docs/screenshots/environment.png)과 [Git 커밋 그래프](docs/screenshots/git-log.png)
+- 실행 화면 [메뉴](docs/screenshots/menu.png), [퀴즈 추가](docs/screenshots/add_quiz.png), [목록](docs/screenshots/list.png), [풀이](docs/screenshots/play.png), [최고 점수](docs/screenshots/score.png)
+- [테스트 케이스와 실행 결과](docs/test-cases.md)
+
+실행 화면은 실제 콘솔 출력과 입력을 기록한 뒤 읽기 쉬운 크기로 캡처했습니다.
