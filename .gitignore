@@ -1,0 +1,5 @@
+/state.json
+/state.json.*.tmp
+/__pycache__/
+*.py[cod]
+/el-2.txt
