@@ -1,3 +1,7 @@
+import json
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+
 from questions import default_quizzes
 from quiz import Quiz
 
@@ -25,11 +29,14 @@ def read_text(prompt: str) -> str:
 class QuizGame:
     """메뉴와 퀴즈 게임의 진행을 관리한다."""
 
-    def __init__(self):
+    def __init__(self, state_path: Path | None = None):
         self.quizzes = default_quizzes()
         self.best_score = None
         self.best_correct = None
         self.best_total = None
+        self.state_path = state_path if state_path is not None else Path(__file__).with_name("state.json")
+        self.can_save = True
+        self.dirty = False
 
     @staticmethod
     def show_menu() -> None:
@@ -45,6 +52,7 @@ class QuizGame:
 
     def run(self) -> None:
         try:
+            self.load()
             while True:
                 self.show_menu()
                 choice = read_number("선택: ", 1, 5)
@@ -60,6 +68,9 @@ class QuizGame:
                     self.show_score()
         except (KeyboardInterrupt, EOFError):
             print("\n입력이 중단되었습니다.")
+        finally:
+            if self.dirty and self.can_save:
+                self.save()
         print("태양계 퀴즈를 종료합니다.")
 
     def play(self) -> None:
@@ -86,6 +97,8 @@ class QuizGame:
             self.best_correct = correct
             self.best_total = total
             print("새로운 최고 점수입니다!")
+            self.dirty = True
+            self.save()
 
     def add_quiz(self) -> None:
         print("\n새 퀴즈 등록")
@@ -95,7 +108,11 @@ class QuizGame:
             choices.append(read_text(f"선택지 {number}: "))
         answer = read_number("정답 번호 (1-4): ", 1, 4)
         self.quizzes.append(Quiz(question, choices, answer))
-        print("퀴즈가 추가되었습니다.")
+        self.dirty = True
+        if self.save():
+            print("퀴즈가 추가되었습니다.")
+        else:
+            print("이번 실행에 퀴즈를 추가했습니다. 파일에 저장하지 못했습니다.")
 
     def list_quizzes(self) -> None:
         if not self.quizzes:
@@ -111,3 +128,82 @@ class QuizGame:
             print("아직 완료한 퀴즈가 없습니다.")
             return
         print(f"최고 점수: {self.best_score}점 ({self.best_total}문제 중 {self.best_correct}문제 정답)")
+
+    def load(self) -> None:
+        try:
+            with self.state_path.open(encoding="utf-8") as file:
+                data = json.load(file)
+            items = data["quizzes"]
+            if not isinstance(items, list):
+                raise ValueError("퀴즈 목록이 유효하지 않습니다.")
+            quizzes = [Quiz(**item) for item in items]
+            score = data["best_score"]
+            correct = data["best_correct"]
+            total = data["best_total"]
+            if score is None:
+                if correct is not None or total is not None:
+                    raise ValueError("점수 기록이 일치하지 않습니다.")
+            elif (
+                any(type(value) is not int for value in (score, correct, total))
+                or not 0 <= correct <= total
+                or total == 0
+                or score != correct * 100 // total
+            ):
+                raise ValueError("점수 기록이 유효하지 않습니다.")
+        except FileNotFoundError:
+            return
+        except (KeyError, TypeError, ValueError):
+            print("저장 파일이 손상되었습니다. 기본 퀴즈로 복구합니다.")
+            self.dirty = True
+            self.save()
+            return
+        except OSError:
+            print("저장 파일을 읽을 수 없어 기본 퀴즈를 사용합니다.")
+            print("기존 파일을 보호하기 위해 이번 실행에서는 파일에 저장하지 않습니다.")
+            self.can_save = False
+            return
+
+        self.quizzes = quizzes
+        self.best_score = score
+        self.best_correct = correct
+        self.best_total = total
+        print(f"저장된 데이터를 불러왔습니다. 퀴즈 {len(quizzes)}개")
+
+    def save(self) -> bool:
+        if not self.can_save:
+            return False
+
+        data = {
+            "quizzes": [
+                {"question": quiz.question, "choices": quiz.choices, "answer": quiz.answer}
+                for quiz in self.quizzes
+            ],
+            "best_score": self.best_score,
+            "best_correct": self.best_correct,
+            "best_total": self.best_total,
+        }
+        temporary_path = None
+        try:
+            with NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=self.state_path.parent,
+                prefix=f"{self.state_path.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as file:
+                temporary_path = Path(file.name)
+                json.dump(data, file, ensure_ascii=False, indent=2)
+                file.write("\n")
+            temporary_path.replace(self.state_path)
+        except (OSError, UnicodeError):
+            print("저장 파일에 기록하지 못했습니다.")
+            return False
+        finally:
+            if temporary_path is not None:
+                try:
+                    temporary_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+        self.dirty = False
+        return True
