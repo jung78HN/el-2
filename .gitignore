@@ -1,5 +1,7 @@
 /state.json
+/state.json.bak
 /state.json.*.tmp
+/state.json.bak.*.tmp
 /__pycache__/
 *.py[cod]
 /el-2.txt
